@@ -31,6 +31,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vscode
 
 # Heavy Binaries
 /src-tauri/bin/*

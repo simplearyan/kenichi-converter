@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Command } from "@tauri-apps/plugin-shell";
 import { save } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -19,6 +19,17 @@ function App() {
 
   // For duration parsing to calculate progress
   const durationRef = useRef<number>(0);
+
+  // Prevent default behavior to allow dropping globally (fixes "not allowed" cursor)
+  useEffect(() => {
+    const preventDefault = (e: Event) => e.preventDefault();
+    document.addEventListener('dragover', preventDefault, { capture: true });
+    document.addEventListener('drop', preventDefault, { capture: true });
+    return () => {
+      document.removeEventListener('dragover', preventDefault, { capture: true });
+      document.removeEventListener('drop', preventDefault, { capture: true });
+    };
+  }, []);
 
   const addLog = (msg: string) => {
     setLogs(prev => [...prev, msg]);
@@ -82,12 +93,8 @@ function App() {
       }
 
       // Speed (video only first, audio complex later if needed)
-      // Simple speed using setpts for video. For audio, atempo.
-      // ffmpeg -i input.mp4 -filter_complex "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]" -map "[v]" -map "[a]" output.mp4
       if (options.speed !== 1.0) {
         const setpts = (1 / options.speed).toFixed(2);
-        // Handling audio tempo is tricky (needs chaining for > 2.0 or < 0.5)
-        // For MVP let's assume range 0.5 - 2.0 covers standard atempo usage
         args.push('-filter_complex', `[0:v]setpts=${setpts}*PTS[v];[0:a]atempo=${options.speed}[a]`, '-map', '[v]', '-map', '[a]');
       }
 
@@ -102,7 +109,7 @@ function App() {
       }
 
       // Output file always last
-      args.push('-y', savePath); // -y to overwrite if dialog didn't handle it (plugin usually handles confirmation)
+      args.push('-y', savePath);
 
       addLog(`Command: ffmpeg ${args.join(' ')}`);
 
@@ -125,7 +132,7 @@ function App() {
       });
 
       command.stdout.on('data', line => addLog(line));
-      command.stderr.on('data', line => addLog(line)); // FFmpeg sends stats to stderr
+      command.stderr.on('data', line => addLog(line));
 
       await command.spawn();
 
