@@ -1,0 +1,68 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "ffmpeg",
+          "args": true,
+          "sidecar": true
+        },
+        {
+          "name": "ffprobe",
+          "args": true,
+          "sidecar": true
+        },
+        {
+          "name": "bin/ffmpeg",
+          "args": true,
+          "sidecar": true
+        },
+        {
+          "name": "bin/ffprobe",
+          "args": true,
+          "sidecar": true
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "ffmpeg",
+          "args": true,
+          "sidecar": true
+        },
+        {
+          "name": "ffprobe",
+          "args": true,
+          "sidecar": true
+        },
+        {
+          "name": "bin/ffmpeg",
+          "args": true,
+          "sidecar": true
+        },
+        {
+          "name": "bin/ffprobe",
+          "args": true,
+          "sidecar": true
+        }
+      ]
+    },
+    "dialog:default",
+    "fs:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-close",
+    "shell:default"
+  ]
+}
