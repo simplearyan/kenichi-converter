@@ -1,7 +1,59 @@
-# Tauri + React + Typescript
+# ⚡ Kenichi Converter
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+A high-performance, aesthetically pleasing media conversion utility built with **Tauri v2**, **React**, and **FFmpeg**. Designed with a "Pro Gray" aesthetic for maximum focus and efficiency.
 
-## Recommended IDE Setup
+![Kenichi Converter Interface](https://github.com/simplearyan/kenichi-converter/raw/main/public/screenshot.png) *(Note: Add your actual screenshot to public/screenshot.png)*
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## ✨ Features
+
+- **🚀 Rapid Conversion**: Powered by FFmpeg sidecars for direct, high-speed media processing.
+- **🎨 Pro Gray UI**: A sleek, dark-themed interface built with **Tailwind CSS v4** and modern glassmorphism.
+- **📥 Native Drag-and-Drop**: Effortlessly drop videos from your OS directly into the app.
+- **🛠️ Precision Controls**: Adjust resolution (720p to 4K), quality (CRF), conversion speed, and format (MP4, MKV, GIF, etc.).
+- **📜 Live Logs**: Real-time console output from the underlying FFmpeg process.
+- **🌍 Cross-Platform**: Optimized for Windows, macOS (Intel/ARM), and Linux.
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (LTS)
+- [Rust](https://www.rust-lang.org/tools/install)
+- FFmpeg binaries (Handled automatically by our CI/CD, or place in `src-tauri/bin/` for local dev)
+
+### Local Development
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/simplearyan/kenichi-converter.git
+   cd kenichi-converter
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run in development mode:
+   ```bash
+   npm run tauri dev
+   ```
+
+## 🏗️ Technical Architecture
+
+- **Frontend**: React + TypeScript + Vite.
+- **Styling**: Tailwind CSS v4 (using `@tailwindcss/vite`).
+- **Backend**: Rust (Tauri v2) for secure shell execution and filesystem access.
+- **Sidecars**: Bundled `ffmpeg` and `ffprobe` binaries for platform-agnostic processing.
+- **CI/CD**: GitHub Actions workflows for automated cross-platform builds and releases.
+
+## 🗺️ Roadmap
+
+We have ambitious plans for Kenichi Converter! Check out our [ROADMAP.md](./ROADMAP.md) for upcoming features like:
+- Integrated Video Previews
+- Trim & Clip tools
+- High-fidelity GIF palette generation
+- Batch processing
+
+## 🛡️ License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+Built with ❤️ by [aryan](https://github.com/simplearyan)
