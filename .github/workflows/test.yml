@@ -56,7 +56,7 @@ jobs:
 
       - name: Download FFmpeg Sidecars
         # This script downloads binaries based on the target triple provided in the matrix
-        run: node scripts/download-ffmpeg.js ${{ matrix.target }}
+        run: node scripts/download-ffmpeg.cjs ${{ matrix.target }}
         shell: bash
 
       - name: Build App
