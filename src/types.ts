@@ -9,6 +9,7 @@ export interface VideoOptions {
     gifMode: 'basic' | 'pro';
     compressionMode: 'quality' | 'target';
     targetSize: number; // in MB
+    audioBitrate: number; // kbps
 }
 
 export const DEFAULT_OPTIONS: VideoOptions = {
@@ -21,5 +22,6 @@ export const DEFAULT_OPTIONS: VideoOptions = {
     trimEnd: null,
     gifMode: 'basic',
     compressionMode: 'quality',
-    targetSize: 25
+    targetSize: 25,
+    audioBitrate: 320
 };

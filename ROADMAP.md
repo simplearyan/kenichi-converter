@@ -27,7 +27,7 @@ Building the ultimate lightweight, high-performance media utility powered by **T
 - [ ] **Audio Master**
   - Dedicated mode for extracting high-quality MP3/WAV/FLAC.
   - ID3 metadata tag editing.
-- [ ] **Smart Compression**
+- [x] **Smart Compression**
   - "Target Size" mode (e.g., Compress for Discord < 25MB).
   - Automatic bitrate calculation.
 

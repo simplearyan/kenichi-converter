@@ -192,6 +192,8 @@ function App() {
       }
 
       // -- AUDIO FILTERS --
+      const isAudio = ['mp3', 'wav', 'flac', 'm4a'].includes(options.format);
+
       if (!options.removeAudio && options.format !== 'gif') {
         if (options.speed !== 1.0) {
           filterChains.push(`[${aLabel}]atempo=${options.speed}[a_processed]`);
@@ -204,23 +206,32 @@ function App() {
         args.push('-filter_complex', filterChains.join(';'));
       }
 
-      // Fix mapping syntax: Raw streams (0:v) shouldn't be wrapped in brackets for -map
-      // Filter outputs (v_final) MUST be wrapped in brackets [v_final]
+      // Fix mapping syntax
       const formatMapLabel = (label: string) => {
         return label.includes(':') ? label : `[${label}]`;
       };
 
-      args.push('-map', formatMapLabel(vLabel));
+      if (isAudio) {
+        // Audio Only Mode
+        args.push('-vn'); // No video
+        args.push('-map', formatMapLabel(options.speed !== 1.0 ? aLabel : '0:a'));
 
-      if (!options.removeAudio && options.format !== 'gif') {
-        // If options.speed !== 1.0, aLabel is 'a_processed' (needs brackets)
-        // If options.speed === 1.0, aLabel is '0:a' (no brackets)
-        const audioTarget = options.speed !== 1.0 ? aLabel : '0:a';
-        args.push('-map', formatMapLabel(audioTarget));
+        // Audio Bitrate (for lossy formats)
+        if (['mp3', 'm4a'].includes(options.format)) {
+          args.push('-b:a', `${options.audioBitrate}k`);
+        }
+      } else {
+        // Video Mode
+        args.push('-map', formatMapLabel(vLabel));
+
+        if (!options.removeAudio && options.format !== 'gif') {
+          const audioTarget = options.speed !== 1.0 ? aLabel : '0:a';
+          args.push('-map', formatMapLabel(audioTarget));
+        }
       }
 
-      // Quality / Bitrate Control
-      if (options.format !== 'gif') {
+      // Quality / Bitrate Control (Video Only)
+      if (!isAudio && options.format !== 'gif') {
         if (options.compressionMode === 'target') {
           // Calculate Bitrate
           // 1. Determine Duration
