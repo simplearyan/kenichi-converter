@@ -63,6 +63,16 @@
     "core:window:allow-start-dragging",
     "core:window:allow-minimize",
     "core:window:allow-close",
-    "shell:default"
+    "shell:default",
+    "fs:allow-cache-read",
+    "fs:scope-cache-recursive",
+    "fs:allow-appcache-read",
+    "fs:scope-appcache-recursive",
+    "fs:allow-applocaldata-read",
+    "fs:scope-applocaldata-recursive",
+    "fs:allow-temp-read",
+    "fs:scope-temp-recursive",
+    "core:image:default",
+    "core:image:allow-from-path"
   ]
 }

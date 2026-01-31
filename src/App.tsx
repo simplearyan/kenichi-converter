@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import { readFile } from "@tauri-apps/plugin-fs";
 import { Command } from "@tauri-apps/plugin-shell";
 import { save } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
 import { RefreshCw, Zap, Minus, X } from "lucide-react";
 import FileDrop from "./components/FileDrop";
 import OptionsPanel from "./components/OptionsPanel";
@@ -12,6 +14,7 @@ import { VideoOptions, DEFAULT_OPTIONS } from "./types";
 function App() {
   const [filePath, setFilePath] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [options, setOptions] = useState<VideoOptions>(DEFAULT_OPTIONS);
   const [logs, setLogs] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'converting' | 'completed' | 'error'>('idle');
@@ -30,6 +33,50 @@ function App() {
       document.removeEventListener('drop', preventDefault, { capture: true });
     };
   }, []);
+
+  const generateThumbnail = async (path: string) => {
+    try {
+      // 1. Get cache directory from Rust backend
+      const cacheDir = await invoke<string>('get_app_cache_dir');
+
+      // 2. Define Output Path
+      // We use a fixed name or ensure uniqueness if needed. 
+      // For simplicity/performance, we overwrite 'thumbnail.jpg' to avoid bloat.
+      // Note: On Windows paths might have backslashes.
+      const sep = navigator.userAgent.includes('Windows') ? '\\' : '/';
+      const outputPath = `${cacheDir}${sep}thumbnail.jpg`;
+
+      // 3. Run FFmpeg command to extract 1 frame at 00:00:01
+      const args = [
+        '-y',               // Overwrite
+        '-ss', '00:00:01',  // Seek to 1s
+        '-i', path,         // Input
+        '-vframes', '1',    // Single frame
+        '-q:v', '2',        // Quality
+        outputPath
+      ];
+
+      const command = Command.sidecar('bin/ffmpeg', args);
+      const result = await command.execute();
+
+      if (result.code === 0) {
+        // 4. Read the file as binary and convert to Base64
+        const fileBytes = await readFile(outputPath);
+        const base64String = btoa(
+          new Uint8Array(fileBytes)
+            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        const dataUrl = `data:image/jpeg;base64,${base64String}`;
+
+        console.log('Thumbnail successfully generated and loaded via Base64');
+        setThumbnail(dataUrl);
+      } else {
+        console.error('Thumbnail generation failed:', result.stderr);
+      }
+    } catch (e) {
+      console.error('Error generating thumbnail:', e);
+    }
+  };
 
   const addLog = (msg: string) => {
     setLogs(prev => [...prev, msg]);
@@ -146,6 +193,7 @@ function App() {
   const reset = () => {
     setFilePath(null);
     setFileName(null);
+    setThumbnail(null);
     setLogs([]);
     setStatus('idle');
     setProgress(0);
@@ -182,21 +230,28 @@ function App() {
               <FileDrop onFileSelect={(path, name) => {
                 setFilePath(path);
                 setFileName(name);
+                generateThumbnail(path);
               }} />
             ) : (
               <div className="bg-pro-900 rounded-xl p-4 border border-pro-800 relative group">
                 <button
                   onClick={reset}
-                  className="absolute top-2 right-2 p-1 text-zinc-500 hover:text-white bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute top-2 right-2 p-1 text-zinc-500 hover:text-white bg-black/50 rounded-full z-10 opacity-0 group-hover:opacity-100 transition-all"
                   title="Remove File"
                 >
                   <RefreshCw size={14} />
                 </button>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center shrink-0 border border-brand-orange/20">
-                    <Zap size={20} />
+                  <div className="w-16 h-10 bg-pro-950/50 rounded-lg flex items-center justify-center shrink-0 border border-pro-800 overflow-hidden">
+                    {thumbnail ? (
+                      <img src={thumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-brand-orange/10 text-brand-orange flex items-center justify-center">
+                        <Zap size={20} />
+                      </div>
+                    )}
                   </div>
-                  <div className="overflow-hidden">
+                  <div className="overflow-hidden flex-1">
                     <div className="font-medium text-sm truncate text-zinc-200" title={fileName || ''}>{fileName}</div>
                     <div className="text-xs text-zinc-500 font-mono truncate">{filePath}</div>
                   </div>

@@ -11,9 +11,9 @@ Building the ultimate lightweight, high-performance media utility powered by **T
 - [x] Cross-Platform CI/CD with GitHub Actions
 
 ## 🛠️ Phase 2: User Experience Enhancements
-- [ ] **Integrated Video Preview**
+- [x] **Integrated Video Preview**
   - Use `ffprobe` to extract metadata and high-quality thumbnails.
-  - Show a hover-preview or GIF of the selected video.
+  - Show a hover-preview or GIF of the selected video. (Thumbnail implemented)
 - [ ] **Trim & Clip Tool**
   - Add start/end time markers to convert specific segments.
   - Implement `-ss` and `-to` seeking logic.
