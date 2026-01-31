@@ -110,7 +110,7 @@ export default function App() {
         ) : (
           <>
             {/* Left Column: Output Preview & Monitoring */}
-            <div className="flex-[2] flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex-2 flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <MediaInfoCard
                 filePath={filePath}
                 thumbnail={thumbnail}

@@ -59,6 +59,10 @@ jobs:
         run: node scripts/download-ffmpeg.cjs ${{ matrix.target }}
         shell: bash
 
+      - name: Verify Sidecar Binaries
+        run: ls -R src-tauri/bin
+        shell: bash
+
       - name: Build App
         # Just verify that the app builds successfully on all platforms
         # We invoke tauri build directly instead of using the action to keep it simple for testing

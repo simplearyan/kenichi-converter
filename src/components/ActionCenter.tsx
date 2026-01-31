@@ -45,7 +45,7 @@ export function ActionCenter({ status, progress, isConverting, onConvert }: Acti
                     </>
                 ) : (
                     <>
-                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></div>
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
                         <Zap size={18} className={isConverting ? '' : 'text-brand-orange'} />
                         <span>Start Process</span>
                     </>
