@@ -137,6 +137,7 @@ function App() {
 
       addLog(`Starting conversion: ${filePath} -> ${savePath}`);
 
+      // 2. Build Args
       const args = [];
 
       // Trimming (Start)
@@ -153,29 +154,71 @@ function App() {
         args.push('-t', clipDuration.toString());
       }
 
-      // Resolution
-      if (options.resolution !== 'original') {
-        const height = options.resolution.replace('p', '');
-        args.push('-vf', `scale=-2:${height}`);
-      }
+      // RE-THINKING FILTER CONSTRUCTION FOR ROBUSTNESS
+      // Let's restart the filter block construction completely to handle Audio+Video safely.
 
-      // Speed
+      const filterChains = [];
+      let vLabel = '0:v';
+      let aLabel = '0:a';
+
+      // -- VIDEO FILTERS --
+      let vFilters = [];
+
       if (options.speed !== 1.0) {
         const setpts = (1 / options.speed).toFixed(2);
-        args.push('-filter_complex', `[0:v]setpts=${setpts}*PTS[v];[0:a]atempo=${options.speed}[a]`, '-map', '[v]', '-map', '[a]');
+        vFilters.push(`setpts=${setpts}*PTS`);
       }
 
-      // Audio
-      if (options.removeAudio) {
-        args.push('-an');
+      if (options.resolution !== 'original') {
+        const height = options.resolution.replace('p', '');
+        vFilters.push(`scale=-2:${height}:flags=lanczos`);
       }
 
-      // Quality
+      // Construct Linear Video Chain
+      if (vFilters.length > 0) {
+        // [0:v] filter1,filter2 [v_processed]
+        filterChains.push(`[${vLabel}]${vFilters.join(',')} [v_processed]`);
+        vLabel = 'v_processed';
+      }
+
+      // -- GIF PRO MODE (Branching) --
+      if (options.format === 'gif' && options.gifMode === 'pro') {
+        // [v_processed] split [a][b]; [a] palettegen [p]; [b][p] paletteuse [v_final]
+        // Note: vLabel acts as input
+        filterChains.push(`[${vLabel}]split[a][b]`);
+        filterChains.push(`[a]palettegen[p]`);
+        filterChains.push(`[b][p]paletteuse[v_final]`);
+        vLabel = 'v_final';
+      }
+
+      // -- AUDIO FILTERS --
+      if (!options.removeAudio && options.format !== 'gif') {
+        if (options.speed !== 1.0) {
+          filterChains.push(`[${aLabel}]atempo=${options.speed}[a_processed]`);
+          aLabel = 'a_processed';
+        }
+      }
+
+      // Assemble Arguments
+      if (filterChains.length > 0) {
+        args.push('-filter_complex', filterChains.join(';'));
+      }
+
+      args.push('-map', `[${vLabel}]`);
+
+      if (!options.removeAudio && options.format !== 'gif') {
+        // If we processed audio, map the label. If not, map original 0:a?
+        // If options.speed == 1.0, aLabel is still '0:a'.
+        // mapping '0:a' works.
+        args.push('-map', options.speed !== 1.0 ? `[${aLabel}]` : '0:a');
+      }
+
+      // Quality (CRF) - Only for non-GIF
       if (options.format !== 'gif') {
         args.push('-crf', options.quality.toString());
       }
 
-      // Output
+      // Output file always last
       args.push('-y', savePath);
 
       addLog(`Command: ffmpeg ${args.join(' ')}`);

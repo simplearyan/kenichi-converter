@@ -6,6 +6,7 @@ export interface VideoOptions {
     removeAudio: boolean;
     trimStart: number;
     trimEnd: number | null;
+    gifMode: 'basic' | 'pro';
 }
 
 export const DEFAULT_OPTIONS: VideoOptions = {
@@ -15,5 +16,6 @@ export const DEFAULT_OPTIONS: VideoOptions = {
     speed: 1.0,
     removeAudio: false,
     trimStart: 0,
-    trimEnd: null
+    trimEnd: null,
+    gifMode: 'basic'
 };

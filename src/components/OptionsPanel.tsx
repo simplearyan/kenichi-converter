@@ -100,26 +100,62 @@ export default function OptionsPanel({ options, setOptions, disabled, duration }
                 </div>
             </div>
 
-            {/* Quality (CRF) */}
-            <div className="space-y-1 pt-2 border-t border-white/5">
-                <div className="flex justify-between">
-                    <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">Quality (CRF)</label>
-                    <span className="text-xs text-brand-yellow font-mono">{options.quality}</span>
+            {/* GIF Options */}
+            {options.format === 'gif' && (
+                <div className="space-y-1 pt-2 border-t border-white/5">
+                    <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">GIF Quality</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={() => handleChange('gifMode', 'basic')}
+                            className={`p-2 rounded-lg text-xs font-medium border transition-all ${options.gifMode === 'basic'
+                                    ? 'bg-brand-orange/20 border-brand-orange text-brand-orange'
+                                    : 'bg-black/40 border-white/10 text-zinc-400 hover:bg-white/5'
+                                }`}
+                        >
+                            Basic
+                        </button>
+                        <button
+                            onClick={() => handleChange('gifMode', 'pro')}
+                            className={`p-2 rounded-lg text-xs font-medium border transition-all ${options.gifMode === 'pro'
+                                    ? 'bg-brand-orange/20 border-brand-orange text-brand-orange'
+                                    : 'bg-black/40 border-white/10 text-zinc-400 hover:bg-white/5'
+                                }`}
+                        >
+                            <span className="flex items-center justify-center gap-1">
+                                Pro <span className="text-[9px] bg-brand-yellow text-black px-1 rounded font-bold">HQ</span>
+                            </span>
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 pt-1">
+                        {options.gifMode === 'pro'
+                            ? 'Uses 2-pass palette generation for better colors (Slower)'
+                            : 'Standard conversion (Faster)'}
+                    </p>
                 </div>
-                <input
-                    type="range"
-                    min="18"
-                    max="51"
-                    step="1"
-                    value={options.quality}
-                    onChange={(e) => handleChange('quality', parseInt(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer hover:bg-white/20"
-                />
-                <div className="flex justify-between text-[10px] text-zinc-600">
-                    <span>High Quality</span>
-                    <span>Low Size</span>
+            )}
+
+            {/* Quality (CRF) - Hide for GIF */}
+            {options.format !== 'gif' && (
+                <div className="space-y-1 pt-2 border-t border-white/5">
+                    <div className="flex justify-between">
+                        <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">Quality (CRF)</label>
+                        <span className="text-xs text-brand-yellow font-mono">{options.quality}</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="18"
+                        max="51"
+                        step="1"
+                        value={options.quality}
+                        onChange={(e) => handleChange('quality', parseInt(e.target.value))}
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer hover:bg-white/20"
+                    />
+                    <div className="flex justify-between text-[10px] text-zinc-600">
+                        <span>High Quality</span>
+                        <span>Low Size</span>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Speed */}
             <div className="space-y-1">
