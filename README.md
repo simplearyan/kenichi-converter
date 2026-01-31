@@ -43,7 +43,27 @@ A high-performance, aesthetically pleasing media conversion utility built with *
 - **Sidecars**: Bundled `ffmpeg` and `ffprobe` binaries for platform-agnostic processing.
 - **CI/CD**: GitHub Actions workflows for automated cross-platform builds and releases.
 
-## 🗺️ Roadmap
+## � Project Structure
+
+The project follows a modular architecture to separate UI, logic, and OS-level operations:
+
+```text
+kenichi-converter/
+├── src/                # Frontend (React + TS)
+│   ├── components/     # Reusable UI components (Panel, TitleBar, etc.)
+│   ├── hooks/          # Custom hooks for state/logic (useConverter, etc.)
+│   ├── utils/          # Pure helper functions (FFmpeg arg builder)
+│   ├── App.tsx         # Main layout orchestrator
+│   └── main.tsx        # Entry point
+├── src-tauri/          # Backend (Rust)
+│   ├── src/            # Rust bridge logic and plugins
+│   ├── bin/            # FFmpeg & FFprobe sidecar binaries
+│   └── tauri.conf.json # App configuration & permissions
+└── public/             # Static assets
+```
+
+
+## �🗺️ Roadmap
 
 We have ambitious plans for Kenichi Converter! Check out our [ROADMAP.md](./ROADMAP.md) for upcoming features like:
 - Integrated Video Previews
