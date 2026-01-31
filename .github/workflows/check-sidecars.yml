@@ -1,0 +1,29 @@
+name: 🚢 Sidecar Health Check
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Mondays
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/download-ffmpeg.cjs'
+
+jobs:
+  verify-sidecars:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [
+          "x86_64-unknown-linux-gnu",
+          "x86_64-pc-windows-msvc",
+          "x86_64-apple-darwin",
+          "aarch64-apple-darwin"
+        ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Verify Download for ${{ matrix.target }}
+        run: node scripts/download-ffmpeg.cjs ${{ matrix.target }}
