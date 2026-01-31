@@ -4,6 +4,8 @@ export interface VideoOptions {
     quality: number; // 0-51 (CRF)
     speed: number; // 0.5 - 2.0
     removeAudio: boolean;
+    trimStart: number;
+    trimEnd: number | null;
 }
 
 export const DEFAULT_OPTIONS: VideoOptions = {
@@ -11,5 +13,7 @@ export const DEFAULT_OPTIONS: VideoOptions = {
     resolution: 'original',
     quality: 23,
     speed: 1.0,
-    removeAudio: false
+    removeAudio: false,
+    trimStart: 0,
+    trimEnd: null
 };

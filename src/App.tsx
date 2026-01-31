@@ -19,8 +19,9 @@ function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'converting' | 'completed' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0); // Video duration in seconds
 
-  // For duration parsing to calculate progress
+  // For duration parsing to calculate progress (fallback if metadata fails)
   const durationRef = useRef<number>(0);
 
   // Prevent default behavior to allow dropping globally (fixes "not allowed" cursor)
@@ -34,19 +35,31 @@ function App() {
     };
   }, []);
 
+  const getMetadata = async (path: string) => {
+    try {
+      const command = Command.sidecar('bin/ffprobe', [
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        path
+      ]);
+      const output = await command.execute();
+      if (output.code === 0) {
+        const d = parseFloat(output.stdout);
+        setDuration(d);
+        durationRef.current = d; // Sync ref
+      }
+    } catch (e) {
+      console.error('Error getting metadata:', e);
+    }
+  };
+
   const generateThumbnail = async (path: string) => {
     try {
-      // 1. Get cache directory from Rust backend
       const cacheDir = await invoke<string>('get_app_cache_dir');
-
-      // 2. Define Output Path
-      // We use a fixed name or ensure uniqueness if needed. 
-      // For simplicity/performance, we overwrite 'thumbnail.jpg' to avoid bloat.
-      // Note: On Windows paths might have backslashes.
       const sep = navigator.userAgent.includes('Windows') ? '\\' : '/';
       const outputPath = `${cacheDir}${sep}thumbnail.jpg`;
 
-      // 3. Run FFmpeg command to extract 1 frame at 00:00:01
       const args = [
         '-y',               // Overwrite
         '-ss', '00:00:01',  // Seek to 1s
@@ -60,15 +73,12 @@ function App() {
       const result = await command.execute();
 
       if (result.code === 0) {
-        // 4. Read the file as binary and convert to Base64
         const fileBytes = await readFile(outputPath);
         const base64String = btoa(
           new Uint8Array(fileBytes)
             .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         const dataUrl = `data:image/jpeg;base64,${base64String}`;
-
-        console.log('Thumbnail successfully generated and loaded via Base64');
         setThumbnail(dataUrl);
       } else {
         console.error('Thumbnail generation failed:', result.stderr);
@@ -110,7 +120,6 @@ function App() {
     if (!filePath || status === 'converting') return;
 
     try {
-      // 1. Select Output
       const outputExt = options.format;
       const savePath = await save({
         filters: [{
@@ -125,13 +134,24 @@ function App() {
       setStatus('converting');
       setLogs([]);
       setProgress(0);
-      durationRef.current = 0;
+
       addLog(`Starting conversion: ${filePath} -> ${savePath}`);
 
-      // 2. Build Args
-      const args = [
-        '-i', filePath,      // Input
-      ];
+      const args = [];
+
+      // Trimming (Start)
+      if (options.trimStart > 0) {
+        args.push('-ss', options.trimStart.toString());
+      }
+
+      // Input
+      args.push('-i', filePath);
+
+      // Trimming (Duration)
+      if (options.trimEnd !== null && options.trimEnd > options.trimStart) {
+        const clipDuration = options.trimEnd - options.trimStart;
+        args.push('-t', clipDuration.toString());
+      }
 
       // Resolution
       if (options.resolution !== 'original') {
@@ -139,7 +159,7 @@ function App() {
         args.push('-vf', `scale=-2:${height}`);
       }
 
-      // Speed (video only first, audio complex later if needed)
+      // Speed
       if (options.speed !== 1.0) {
         const setpts = (1 / options.speed).toFixed(2);
         args.push('-filter_complex', `[0:v]setpts=${setpts}*PTS[v];[0:a]atempo=${options.speed}[a]`, '-map', '[v]', '-map', '[a]');
@@ -150,17 +170,16 @@ function App() {
         args.push('-an');
       }
 
-      // Quality (CRF) - lower is better quality
+      // Quality
       if (options.format !== 'gif') {
         args.push('-crf', options.quality.toString());
       }
 
-      // Output file always last
+      // Output
       args.push('-y', savePath);
 
       addLog(`Command: ffmpeg ${args.join(' ')}`);
 
-      // 3. Execution
       const command = Command.sidecar('bin/ffmpeg', args);
 
       command.on('close', (data) => {
@@ -194,6 +213,7 @@ function App() {
     setFilePath(null);
     setFileName(null);
     setThumbnail(null);
+    setDuration(0);
     setLogs([]);
     setStatus('idle');
     setProgress(0);
@@ -231,6 +251,7 @@ function App() {
                 setFilePath(path);
                 setFileName(name);
                 generateThumbnail(path);
+                getMetadata(path);
               }} />
             ) : (
               <div className="bg-pro-900 rounded-xl p-4 border border-pro-800 relative group">
@@ -264,6 +285,7 @@ function App() {
                 options={options}
                 setOptions={setOptions}
                 disabled={status === 'converting'}
+                duration={duration}
               />
             </div>
           </div>

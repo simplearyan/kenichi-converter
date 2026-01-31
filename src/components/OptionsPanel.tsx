@@ -4,11 +4,19 @@ interface OptionsPanelProps {
     options: VideoOptions;
     setOptions: (options: VideoOptions) => void;
     disabled: boolean;
+    duration: number; // Video duration in seconds
 }
 
-export default function OptionsPanel({ options, setOptions, disabled }: OptionsPanelProps) {
+export default function OptionsPanel({ options, setOptions, disabled, duration }: OptionsPanelProps) {
     const handleChange = (key: keyof VideoOptions, value: any) => {
         setOptions({ ...options, [key]: value });
+    };
+
+    const formatTime = (seconds: number) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -45,8 +53,55 @@ export default function OptionsPanel({ options, setOptions, disabled }: OptionsP
                 </select>
             </div>
 
+            {/* Trim / Clip */}
+            <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex justify-between items-center">
+                    <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">Trim / Clip</label>
+                    <span className="text-[10px] text-zinc-600 font-mono">
+                        Max: {formatTime(duration)}
+                    </span>
+                </div>
+                <div className="flex gap-2">
+                    <div className="flex-1 space-y-1">
+                        <label className="text-[10px] text-zinc-400">Start (s)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            max={duration.toString()}
+                            step="0.1"
+                            value={options.trimStart}
+                            onChange={(e) => {
+                                const val = Math.max(0, Math.min(parseFloat(e.target.value) || 0, duration));
+                                handleChange('trimStart', val);
+                            }}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white font-mono focus:outline-none focus:border-brand-yellow/50"
+                        />
+                        <div className="text-[10px] text-zinc-600 text-right">{formatTime(options.trimStart)}</div>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <label className="text-[10px] text-zinc-400">End (s)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            max={duration.toString()}
+                            step="0.1"
+                            placeholder="End"
+                            value={options.trimEnd ?? ''}
+                            onChange={(e) => {
+                                const val = e.target.value === '' ? null : Math.max(0, Math.min(parseFloat(e.target.value), duration));
+                                handleChange('trimEnd', val);
+                            }}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white font-mono focus:outline-none focus:border-brand-yellow/50"
+                        />
+                        <div className="text-[10px] text-zinc-600 text-right">
+                            {options.trimEnd ? formatTime(options.trimEnd) : 'End of File'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Quality (CRF) */}
-            <div className="space-y-1">
+            <div className="space-y-1 pt-2 border-t border-white/5">
                 <div className="flex justify-between">
                     <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">Quality (CRF)</label>
                     <span className="text-xs text-brand-yellow font-mono">{options.quality}</span>
