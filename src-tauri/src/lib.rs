@@ -23,6 +23,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![greet, get_app_cache_dir])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

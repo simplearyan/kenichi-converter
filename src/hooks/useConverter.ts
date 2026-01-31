@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Command } from '@tauri-apps/plugin-shell';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import { VideoOptions } from '../types';
 import { buildFFmpegArgs } from '../utils/ffmpegUtils';
 
@@ -8,8 +9,34 @@ export function useConverter() {
     const [progress, setProgress] = useState(0);
     const [logs, setLogs] = useState<string[]>([]);
 
+    // Track logs to avoid spamming the same progress %
+    const lastLoggedProgressRef = useRef<number>(-1);
+
     // Ref to track total duration for progress calculation locally within command logs
     const totalDurationRef = useRef(0);
+
+    const playSuccessSound = useCallback(() => {
+        try {
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+            oscillator.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.1); // E6
+
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } catch (e) {
+            console.error("Failed to play sound:", e);
+        }
+    }, []);
 
     const addLog = useCallback((msg: string) => {
         setLogs(prev => [...prev, msg].slice(-100));
@@ -24,10 +51,18 @@ export function useConverter() {
                 const seconds = parseFloat(match[3]);
                 const currentTime = hours * 3600 + minutes * 60 + seconds;
                 const p = Math.min(100, (currentTime / totalDurationRef.current) * 100);
-                setProgress(Math.round(p));
+                const roundedP = Math.round(p);
+
+                setProgress(roundedP);
+
+                // Log every 10% to avoid terminal flood
+                if (roundedP % 10 === 0 && roundedP !== lastLoggedProgressRef.current && roundedP > 0) {
+                    addLog(`Progress: ${roundedP}%`);
+                    lastLoggedProgressRef.current = roundedP;
+                }
             }
         }
-    }, []);
+    }, [addLog]);
 
     const convert = useCallback(async (
         filePath: string,
@@ -39,6 +74,7 @@ export function useConverter() {
             setStatus('converting');
             setLogs([]);
             setProgress(0);
+            lastLoggedProgressRef.current = -1;
 
             // Set for progress parsing
             let calcDuration = duration;
@@ -55,12 +91,12 @@ export function useConverter() {
             const command = Command.sidecar('bin/ffmpeg', args);
 
             command.stdout.on('data', (line) => {
-                addLog(line);
+                // Stdout is usually empty for ffmpeg unless -v is redirected, but we keep for safety
                 parseProgress(line);
             });
 
             command.stderr.on('data', (line) => {
-                addLog(line);
+                // FFmpeg output is largely on stderr
                 parseProgress(line);
             });
 
@@ -69,7 +105,28 @@ export function useConverter() {
             if (output.code === 0) {
                 setStatus('idle');
                 setProgress(100);
+                addLog('Progress: 100%');
                 addLog('Conversion Successful! 🎉');
+
+                // Audio & Notification
+                playSuccessSound();
+
+                try {
+                    let hasPermission = await isPermissionGranted();
+                    if (!hasPermission) {
+                        const permission = await requestPermission();
+                        hasPermission = permission === 'granted';
+                    }
+                    if (hasPermission) {
+                        sendNotification({
+                            title: 'Kenichi Converter',
+                            body: 'Conversion Finished Successfully! 🎉'
+                        });
+                    }
+                } catch (err) {
+                    console.warn("Notification error:", err);
+                }
+
                 return true;
             } else {
                 setStatus('error');
@@ -82,7 +139,7 @@ export function useConverter() {
             addLog(`Exception: ${e}`);
             return false;
         }
-    }, [addLog, parseProgress]);
+    }, [addLog, parseProgress, playSuccessSound]);
 
     return {
         status,

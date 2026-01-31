@@ -32,6 +32,6 @@ Building the ultimate lightweight, high-performance media utility powered by **T
   - Automatic bitrate calculation.
 
 ## 🎨 Phase 4: Visual Polish
-- [ ] Semi-transparent background (Acrylic/Vibrancy) for Windows/macOS.
+- [x] Semi-transparent background (Acrylic/Vibrancy) for Windows/macOS.
 - [ ] Context menus for recent files.
 - [ ] Custom tray integration for background tasks.

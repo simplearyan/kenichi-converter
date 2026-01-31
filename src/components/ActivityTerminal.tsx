@@ -43,9 +43,10 @@ export function ActivityTerminal({ logs, onClear, children }: ActivityTerminalPr
                         </span>
                         <span className={
                             log.toLowerCase().includes('error') ? 'text-red-400' :
-                                log.toLowerCase().includes('success') ? 'text-emerald-400' :
-                                    log.includes('Command:') ? 'text-brand-yellow/70' :
-                                        'text-zinc-300'
+                                log.toLowerCase().includes('success') ? 'text-emerald-400 font-bold' :
+                                    log.includes('Progress:') ? 'text-brand-yellow font-bold' :
+                                        log.includes('Command:') ? 'text-brand-yellow/70' :
+                                            'text-zinc-300'
                         }>
                             {log}
                         </span>
