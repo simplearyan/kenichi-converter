@@ -24,7 +24,7 @@ Building the ultimate lightweight, high-performance media utility powered by **T
 - [ ] **Batch Processing**
   - Queue multiple files for sequential or parallel conversion.
   - Track progress for the entire "Batch" in the dashboard.
-- [ ] **Audio Master**
+- [x] **Audio Master**
   - Dedicated mode for extracting high-quality MP3/WAV/FLAC.
   - ID3 metadata tag editing.
 - [x] **Smart Compression**

@@ -57,14 +57,18 @@
     border-radius: 9999px;
     border: 2px solid var(--color-pro-950);
 }
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-pro-400);
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
-body {
-    background-color: var(--color-pro-950);
-    color: white;
-    font-family: var(--font-sans);
-    overflow: hidden;
+.glass-panel {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-white/5 shadow-2xl;
+}
+
+.glass-input {
+    @apply bg-black/20 border border-white/10 text-white placeholder-zinc-600 focus:border-brand-yellow/50 focus:bg-black/40 transition-all outline-none;
 }
