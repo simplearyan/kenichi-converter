@@ -110,7 +110,7 @@ export default function App() {
         ) : (
           <>
             {/* Left Column: Output Preview & Monitoring */}
-            <div className="flex-2 flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex-1 flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <MediaInfoCard
                 filePath={filePath}
                 thumbnail={thumbnail}
@@ -131,7 +131,7 @@ export default function App() {
             </div>
 
             {/* Right Column: Configuration */}
-            <div className="flex-1 min-w-[320px] max-w-[600px] flex flex-col gap-4 animate-in fade-in slide-in-from-right-8 duration-500 delay-100">
+            <div className="flex-1 min-w-[320px] flex flex-col gap-4 animate-in fade-in slide-in-from-right-8 duration-500 delay-100">
               <div className="glass-panel rounded-2xl flex-1 flex flex-col overflow-hidden">
                 <div className="px-5 py-4 border-b border-white/5 bg-black/20">
                   <h2 className="text-sm font-bold text-white uppercase tracking-wider">Configuration</h2>

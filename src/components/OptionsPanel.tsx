@@ -69,7 +69,7 @@ export function OptionsPanel({ options, onChange, disabled, duration }: OptionsP
             {/* SECTION: RESOLUTION (Video Only) */}
             {!isAudio && (
                 <Section title="Resolution" icon={<Monitor size={14} />}>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-2">
                         {['original', '1080p', '720p', '480p'].map((res) => (
                             <button
                                 key={res}
@@ -180,7 +180,7 @@ export function OptionsPanel({ options, onChange, disabled, duration }: OptionsP
                     {/* Target Size Inputs */}
                     {options.compressionMode === 'target' && (
                         <div className="space-y-4">
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 xl:grid-cols-6 gap-2">
                                 {[{ l: 'Discord', s: 25 }, { l: 'Email', s: 10 }, { l: 'HD', s: 100 }].map((p) => (
                                     <button
                                         key={p.l}
