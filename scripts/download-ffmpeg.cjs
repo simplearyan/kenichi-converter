@@ -23,7 +23,7 @@ const binaries = [
 ];
 
 async function downloadBinary(name, triple) {
-    const platform = triple.includes('windows') ? 'win-64' : (triple.includes('darwin') ? 'osx-64' : 'linux-64');
+    const platform = triple.includes('windows') ? 'win-64' : (triple.includes('darwin') ? 'macos-64' : 'linux-64');
     // Versioned filenames in the URL: ffmpeg-6.1-win-64.zip
     const url = `https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/${name}-6.1-${platform}.zip`;
     const zipPath = path.join(binDir, `${name}-${platform}.zip`);
