@@ -134,26 +134,111 @@ export default function OptionsPanel({ options, setOptions, disabled, duration }
                 </div>
             )}
 
-            {/* Quality (CRF) - Hide for GIF */}
+            {/* Compression Options (Non-GIF) */}
             {options.format !== 'gif' && (
-                <div className="space-y-1 pt-2 border-t border-white/5">
-                    <div className="flex justify-between">
-                        <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">Quality (CRF)</label>
-                        <span className="text-xs text-brand-yellow font-mono">{options.quality}</span>
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                    <label className="text-xs uppercase text-zinc-500 font-bold tracking-wider">Compression</label>
+
+                    {/* Mode Toggle */}
+                    <div className="flex bg-black/40 p-1 rounded-lg border border-white/10">
+                        <button
+                            onClick={() => handleChange('compressionMode', 'quality')}
+                            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${options.compressionMode === 'quality'
+                                    ? 'bg-zinc-700 text-white shadow-sm'
+                                    : 'text-zinc-400 hover:text-white'
+                                }`}
+                        >
+                            Constant Quality
+                        </button>
+                        <button
+                            onClick={() => handleChange('compressionMode', 'target')}
+                            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${options.compressionMode === 'target'
+                                    ? 'bg-zinc-700 text-white shadow-sm'
+                                    : 'text-zinc-400 hover:text-white'
+                                }`}
+                        >
+                            Target Size
+                        </button>
                     </div>
-                    <input
-                        type="range"
-                        min="18"
-                        max="51"
-                        step="1"
-                        value={options.quality}
-                        onChange={(e) => handleChange('quality', parseInt(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer hover:bg-white/20"
-                    />
-                    <div className="flex justify-between text-[10px] text-zinc-600">
-                        <span>High Quality</span>
-                        <span>Low Size</span>
-                    </div>
+
+                    {/* Constant Quality Mode */}
+                    {options.compressionMode === 'quality' && (
+                        <div className="space-y-1 pt-1">
+                            <div className="flex justify-between">
+                                <span className="text-xs text-zinc-400">CRF Value</span>
+                                <span className="text-xs text-brand-yellow font-mono">{options.quality}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="18"
+                                max="51"
+                                step="1"
+                                value={options.quality}
+                                onChange={(e) => handleChange('quality', parseInt(e.target.value))}
+                                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer hover:bg-white/20"
+                            />
+                            <div className="flex justify-between text-[10px] text-zinc-600">
+                                <span>High Quality</span>
+                                <span>Low Size</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Target Size Mode */}
+                    {options.compressionMode === 'target' && (
+                        <div className="space-y-3 pt-1">
+                            {/* Presets */}
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { label: 'Discord', size: 25 },
+                                    { label: 'WhatsApp', size: 16 },
+                                    { label: 'Email', size: 10 }
+                                ].map((preset) => (
+                                    <button
+                                        key={preset.label}
+                                        onClick={() => handleChange('targetSize', preset.size)}
+                                        className={`p-2 rounded-lg border text-xs transition-all ${options.targetSize === preset.size
+                                                ? 'bg-brand-orange/20 border-brand-orange text-brand-orange'
+                                                : 'bg-black/20 border-white/10 text-zinc-400 hover:bg-white/5'
+                                            }`}
+                                    >
+                                        <div className="font-bold">{preset.label}</div>
+                                        <div className="text-[10px] opacity-70">{preset.size}MB</div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Manual Input */}
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] text-zinc-400">Max Size (MB)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={options.targetSize}
+                                        onChange={(e) => handleChange('targetSize', parseFloat(e.target.value) || 1)}
+                                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white font-mono focus:outline-none focus:border-brand-yellow/50"
+                                    />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] text-zinc-400">Est. Bitrate</label>
+                                    <div className="w-full bg-black/20 border border-white/5 rounded-lg p-2 text-sm text-zinc-500 font-mono text-right">
+                                        {duration > 0 ? (
+                                            `${Math.round(((options.targetSize * 8192) / (options.trimEnd ? options.trimEnd - options.trimStart : duration)))} kbps`
+                                        ) : (
+                                            <span className="text-xs italic">Unknown Dur.</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {duration === 0 && (
+                                <p className="text-[10px] text-red-400 bg-red-500/10 p-2 rounded">
+                                    ⚠️ Video duration unknown. Bitrate calculation may fail.
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 

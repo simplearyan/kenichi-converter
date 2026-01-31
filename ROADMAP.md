@@ -14,10 +14,10 @@ Building the ultimate lightweight, high-performance media utility powered by **T
 - [x] **Integrated Video Preview**
   - Use `ffprobe` to extract metadata and high-quality thumbnails.
   - Show a hover-preview or GIF of the selected video. (Thumbnail implemented)
-- [ ] **Trim & Clip Tool**
+- [x] **Trim & Clip Tool**
   - Add start/end time markers to convert specific segments.
   - Implement `-ss` and `-to` seeking logic.
-- [ ] **Pro GIF Mode**
+- [x] **Pro GIF Mode**
   - Two-pass palette generation for high-fidelity GIFs (no more dithering issues).
 
 ## ⚡ Phase 3: Power Features

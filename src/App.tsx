@@ -204,18 +204,68 @@ function App() {
         args.push('-filter_complex', filterChains.join(';'));
       }
 
-      args.push('-map', `[${vLabel}]`);
+      // Fix mapping syntax: Raw streams (0:v) shouldn't be wrapped in brackets for -map
+      // Filter outputs (v_final) MUST be wrapped in brackets [v_final]
+      const formatMapLabel = (label: string) => {
+        return label.includes(':') ? label : `[${label}]`;
+      };
+
+      args.push('-map', formatMapLabel(vLabel));
 
       if (!options.removeAudio && options.format !== 'gif') {
-        // If we processed audio, map the label. If not, map original 0:a?
-        // If options.speed == 1.0, aLabel is still '0:a'.
-        // mapping '0:a' works.
-        args.push('-map', options.speed !== 1.0 ? `[${aLabel}]` : '0:a');
+        // If options.speed !== 1.0, aLabel is 'a_processed' (needs brackets)
+        // If options.speed === 1.0, aLabel is '0:a' (no brackets)
+        const audioTarget = options.speed !== 1.0 ? aLabel : '0:a';
+        args.push('-map', formatMapLabel(audioTarget));
       }
 
-      // Quality (CRF) - Only for non-GIF
+      // Quality / Bitrate Control
       if (options.format !== 'gif') {
-        args.push('-crf', options.quality.toString());
+        if (options.compressionMode === 'target') {
+          // Calculate Bitrate
+          // 1. Determine Duration
+          let calcDuration = durationRef.current;
+          if (options.trimEnd !== null && options.trimEnd > options.trimStart) {
+            calcDuration = options.trimEnd - options.trimStart;
+          }
+
+          if (calcDuration > 0 && options.targetSize > 0) {
+            // Target Bits = MB * 8 * 1024 * 1024
+            const targetBits = options.targetSize * 8 * 1024 * 1024;
+            const totalBitrate = Math.floor(targetBits / calcDuration); // bps
+
+            // Reserve for Audio (128 kbps)
+            const audioBitrate = 128000;
+            let videoBitrate = totalBitrate;
+
+            if (!options.removeAudio) {
+              videoBitrate = totalBitrate - audioBitrate;
+            }
+
+            // Safety floor (100 kbps)
+            if (videoBitrate < 100000) {
+              addLog(`Warning: Target size too small for duration. Clamping video bitrate to 100kbps.`);
+              videoBitrate = 100000;
+            }
+
+            addLog(`Smart Compression: Target ${options.targetSize}MB over ${calcDuration.toFixed(1)}s`);
+            addLog(`Calculated Bitrate: ${(videoBitrate / 1000).toFixed(0)}k`);
+
+            args.push('-b:v', videoBitrate.toString());
+            args.push('-maxrate', videoBitrate.toString());
+            args.push('-bufsize', (videoBitrate * 2).toString());
+
+            if (!options.removeAudio) {
+              args.push('-b:a', '128k');
+            }
+          } else {
+            addLog(`Error: Unknown duration, falling back to CRF 23.`);
+            args.push('-crf', '23');
+          }
+        } else {
+          // Constant Quality
+          args.push('-crf', options.quality.toString());
+        }
       }
 
       // Output file always last
