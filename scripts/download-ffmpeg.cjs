@@ -39,7 +39,7 @@ if (!fs.existsSync(binDir)) {
  */
 function getPlatformSlug(triple) {
   if (triple.includes('windows'))          return 'win-64';
-  if (triple.includes('aarch64-apple'))    return 'macos-arm-64';
+  if (triple.includes('aarch64-apple'))    return 'macos-64'; // ffbinaries only has macos-64
   if (triple.includes('x86_64-apple'))     return 'macos-64';
   if (triple.includes('linux'))            return 'linux-64';
   throw new Error(`Unsupported target triple: ${triple}`);
