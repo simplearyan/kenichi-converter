@@ -1,8 +1,11 @@
 [package]
 name = "kenichiconverter"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A high-performance, cross-platform media converter powered by FFmpeg."
+authors = ["Aryan <simplearyan>"]
+license = "MIT"
+homepage = "https://github.com/simplearyan/kenichi-converter"
+repository = "https://github.com/simplearyan/kenichi-converter"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

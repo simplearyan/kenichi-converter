@@ -1,69 +1,156 @@
 name: 🚀 Production Release
+
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
 
 jobs:
-  release:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create-release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `${{ steps.get_version.outputs.tag }}`,
+              name: `Kenichi Converter v${{ steps.get_version.outputs.version }}`,
+              body: `## ⚡ Kenichi Converter v${{ steps.get_version.outputs.version }}\n\n> A high-performance media conversion utility powered by FFmpeg.\n\n### 📦 Downloads\n\n| Platform | File | Notes |\n|---|---|---|\n| 🪟 Windows | \`.msi\` | Recommended installer |\n| 🍎 macOS (Apple Silicon) | \`.dmg\` | M1/M2/M3 Macs |\n| 🍎 macOS (Intel) | \`.dmg\` | Intel Macs |\n| 🐧 Linux | \`.AppImage\` | Universal binary |\n| 🐧 Linux (Debian/Ubuntu) | \`.deb\` | Debian-based distros |\n\n### 🔑 macOS Security Note\n> If macOS shows "unidentified developer", right-click the app → **Open** to bypass Gatekeeper.\n\n### ✨ Changes\nSee [CHANGELOG](https://github.com/${{ github.repository }}/commits/main) for full details.`,
+              draft: false,
+              prerelease: false,
+            });
+            return data.id;
+
+  build-and-upload:
+    needs: create-release
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest' # for Arm64 build
+          - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
             target: 'aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel build
+            label: 'macOS-arm64'
+
+          - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
             target: 'x86_64-apple-darwin'
+            label: 'macOS-x86_64'
+
           - platform: 'ubuntu-22.04'
             args: ''
             target: 'x86_64-unknown-linux-gnu'
+            label: 'Linux-x86_64'
+
           - platform: 'windows-latest'
             args: ''
             target: 'x86_64-pc-windows-msvc'
+            label: 'Windows-x86_64'
 
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: 'npm'
 
-      - name: install Rust stable
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: install dependencies (ubuntu only)
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install Linux system dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
-          # Install ffmpeg locally just for safety during verification, but we use sidecar
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            unzip
 
-      - name: install frontend dependencies
-        run: npm install
+      - name: Install macOS dependencies
+        if: matrix.platform == 'macos-latest'
+        run: brew install unzip || true
 
-      - name: Download FFmpeg Sidecars
-        # This script downloads binaries based on the target triple provided in the matrix
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Download FFmpeg sidecars
         run: node scripts/download-ffmpeg.cjs ${{ matrix.target }}
         shell: bash
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Verify sidecar binaries
+        shell: bash
+        run: |
+          echo "Contents of src-tauri/bin:"
+          ls -lh src-tauri/bin/
+
+      - name: Build and upload to release
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
+
+  publish-release:
+    needs: [create-release, build-and-upload]
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Mark release as published
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ needs.create-release.outputs.release_id }},
+              draft: false,
+            });
